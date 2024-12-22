@@ -1,66 +1,179 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Rosalana Accounts
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Rosalana Accounts je centrální služba pro řízení uživatelských účtů (registrace, login, správa) v ekosystému Rosalana. Všechny aplikace mohou přes API ověřovat uživatele pomocí JWT tokenů. Zároveň je možné registrovat nové „aplikace“ (App tokens), které se tímto API prokazují.
 
-## About Laravel
+## Přehled funkcí
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+### Registrace a přihlášení uživatelů
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+- Registrace (/register) a login (/login) vrací JWT token.
+- JWT token mohou ostatní aplikace validovat offline (sdíleným JWT_SECRET či přes RS256).
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### Ověření uživatele
 
-## Learning Laravel
+- Endpoint /me získá detail přihlášeného uživatele (pokud je JWT validní).
+- Endpoint /logout zneplatní token (pokud je blacklist povolen).
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+### Správa aplikací (Apps)
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+- Lze registrovat nové aplikace přes /apps/register.
+- Každá aplikace má vlastní App Token – slouží k ověření, že daná aplikace smí volat Rosalana Accounts API.
+- Endpoints pro výpis aplikací a mazání slouží administrátorům (Master App).
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### Zabezpečení
 
-## Laravel Sponsors
+- App token („app.token“ middleware) – ověřuje, že request opravdu pochází z registrované aplikace (nebo z Master).
+- JWT Auth („jwt.auth“ middleware) – ověřuje přihlášeného uživatele na základě JWT.
+- Master App („app.master“ middleware) – speciální token pro Rosalana Support / Admin, který má práva spravovat aplikace.
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+## Jak to funguje
 
-### Premium Partners
+1. Aplikace (např. ABC) se zaregistruje v Rosalana Accounts.
+2. Získá app_token, který pak posílá v hlavičce X-App-Token (nebo Authorization, dle implementace).
+3. Uživatel se registruje přes endpoint /register a následně se přihlašuje pomocí /login.
+4. Při přihlášení dostává uživatel JWT token, který front-end (např. localStorage) nebo back-end aplikace ukládá a posílá v hlavičce Authorization: Bearer <JWT>.
+5. Rosalana Accounts tímto tokenem umí identifikovat uživatele ve všech dalších voláních (např. /me).
+6. Ostatní aplikace (ABC, ABD, …) mohou tentýž JWT token validovat „offline“ (pokud mají stejný JWT_SECRET nebo veřejný klíč v případě RS256).
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+## High-level flow
 
-## Contributing
+```mermaid
+sequenceDiagram
+    participant User
+    participant ABC (app)
+    participant RosalanaAccounts
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+    User->>ABC: [Front-end] Chce se přihlásit (email + heslo)
+    ABC->>RosalanaAccounts: POST /login (s X-App-Token=ABC_APP_TOKEN)
+    RosalanaAccounts->>ABC: {user, token: <JWT>}
+    ABC->>User: Uloží JWT, user je přihlášen
 
-## Code of Conduct
+    User->>ABC: Volá chráněnou funkci
+    ABC->>ABC: Ověří (offline) JWT = userID = #123
+    ABC->>RosalanaAccounts: Případně volá /me /logout (s JWT)
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+## Konvence a nastavení
 
-## Security Vulnerabilities
+### X-App-Token:
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+- Každá aplikace prokazuje svou identitu tímto tokenem.
+- Je uložen v DB tabulce apps (sloupec token).
 
-## License
+### ROSALANA_MASTER_TOKEN:
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+- Token pro tzv. „Master App“ – typicky je to Rosalana Support / Admin centrum.
+- V .env Rosalana Accounts se nastavuje konstantou ROSALANA_MASTER_TOKEN=....
+
+### JWT:
+
+- Aplikace generuje a ověřuje tokeny přes tymon/jwt-auth.
+- Nastavení v .env:
+
+```makefile
+JWT_SECRET=someRandomString
+JWT_TTL=60
+# plus další podle potřeby
+```
+
+- Sdílené mezi Rosalana Accounts a ostatními aplikacemi (pokud je HS256).
+
+## API Endpoints:
+
+| Endpoint          | Metoda | Middleware         | Popis                                              |
+|-------------------|--------|--------------------|----------------------------------------------------|
+| POST /register    | POST   | app.token          | Registrace nového uživatele, vrací JWT             |
+| POST /login       | POST   | app.token          | Přihlášení uživatele, vrací JWT                    |
+| GET /me           | GET    | app.token, jwt.auth| Získá data o aktuálním uživateli (podle JWT)       |
+| POST /logout      | POST   | app.token, jwt.auth| Zneplatní JWT (pokud blacklist je ON)              |
+| POST /apps/register | POST | app.master         | Vytvoří novou App (vrací App Token)                |
+| GET /apps         | GET    | app.master         | Seznam aplikací                                    |
+| GET /apps/{token} | GET    | app.master         | Detaily jedné App                                  |
+| DELETE /apps/{token} | DELETE | app.master      | Smazání App                                        |
+
+## Nasazení:
+
+Běžná Laravel aplikace, stačí nastavit .env s parametry:
+
+```makefile
+APP_NAME="Rosalana Accounts"
+APP_ENV=production
+APP_KEY=base64:...
+DB_CONNECTION=mysql
+DB_HOST=...
+DB_DATABASE=rosalana_accounts
+DB_USERNAME=...
+DB_PASSWORD=...
+
+# JWT
+JWT_SECRET=...
+JWT_TTL=60
+
+# Master token pro správu aplikací
+ROSALANA_MASTER_TOKEN=...
+
+# atd.
+```
+
+- Spustit migrace: `php artisan migrate`.
+- (Volitelně) Publikovat config: `php artisan vendor:publish --provider="Tymon\JWTAuth\Providers\LaravelServiceProvider"`.
+- Hotovo.
+
+## Jak používat
+
+### Registrovat aplikaci (Master App only)
+
+```bash
+curl -X POST https://accounts.example.com/apps/register \
+     -H "X-App-Token: <MASTER TOKEN>" \
+     -d "name=TestApp"
+# => { "id": 5, "name": "TestApp", "token": "..." }
+```
+
+Nyní token=„abc123…“ přiřaďte aplikaci TestApp.
+
+### Login uživatele
+
+```bash
+curl -X POST https://accounts.example.com/login \
+     -H "X-App-Token: <token of the calling app>" \
+     -H "Content-Type: application/json" \
+     -d '{"email": "john@example.com", "password": "secret"}'
+# => { "user": { ... }, "token": "<JWT>" }
+```
+
+### Volání chráněných endpointů
+
+```bash
+curl -X GET https://accounts.example.com/me \
+     -H "X-App-Token: <app_token>" \
+     -H "Authorization: Bearer <JWT>"
+# => { "user": { ... } }
+```
+
+## Ready to Deploy
+
+Tuto aplikaci můžete nasadit na:
+
+- VPS (Linux + PHP-FPM + Nginx/Apache)
+- Docker s oficiálním php:8.x-fpm + nginx:alpine (potřeba volume pro .env)
+- Laravel Forge, Ploi, nebo jiné hostingy
+
+Nezapomeňte:
+
+- Vytvořit databázi a spustit `php artisan migrate`.
+- Nastavit .env (hlavně APP_KEY, JWT_SECRET a ROSALANA_MASTER_TOKEN).
+- Zabezpečit veřejné URL (HTTPS, nastavit APP_ENV=production, APP_DEBUG=false).
+
+## Další vývoj
+
+- Refresh tokeny: Pro dlouhodobé session by se mohla přidat funkce /refresh.
+- Přechod na RS256: Pro oddělení možností „podepisovat tokeny“ a „pouze validovat“.
+- Notifikace: Napojení na Rosalana Notification Service.
+- Subscriptions: Napojení na Rosalana Subscription modul.
+
+## Licence & Kontakt
+
+(Doplňte dle vlastního uvážení, např. MIT, or private.)
+
+Author: Vaše jméno, vaše webstránka
