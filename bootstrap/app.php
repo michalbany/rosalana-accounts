@@ -16,8 +16,12 @@ return Application::configure(basePath: dirname(__DIR__))
             \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
         ]);
 
+        $middleware->append(\App\Http\Middleware\ForceJson::class);
+
         $middleware->alias([
             'verified' => \App\Http\Middleware\EnsureEmailIsVerified::class,
+            'app.token' => \App\Http\Middleware\CheckAppToken::class,
+            'app.master' => \App\Http\Middleware\CheckMasterToken::class,
         ]);
 
         //
