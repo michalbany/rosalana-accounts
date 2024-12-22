@@ -1,18 +1,22 @@
 # Rosalana Accounts
 
-Rosalana Accounts je centrální služba pro řízení uživatelských účtů (registrace, login, správa) v ekosystému Rosalana. Všechny aplikace mohou přes API ověřovat uživatele pomocí JWT tokenů. Zároveň je možné registrovat nové „aplikace“ (App tokens), které se tímto API prokazují.
+![Static Badge](https://img.shields.io/badge/ROSALANA-blue?style=for-the-badge)
+![Static Badge](https://img.shields.io/badge/Ready_to-Deploy-green?style=for-the-badge)
+
+
+Rosalana Accounts je centrální služba pro řízení uživatelských účtů (registrace, login, správa) v ekosystému Rosalana. Všechny aplikace mohou přes API ověřovat uživatele pomocí JWT tokenů. Přihlašování je chráněné pro registrované aplikace v eco-systému. Aplikaci je třeba registrovat přes `MASTER APP`. Aplikací je třeba se prokazovat při každém requestu.
 
 ## Přehled funkcí
 
 ### Registrace a přihlášení uživatelů
 
 - Registrace (/register) a login (/login) vrací JWT token.
-- JWT token mohou ostatní aplikace validovat offline (sdíleným JWT_SECRET či přes RS256).
+- JWT token mohou ostatní aplikace validovat offline (sdíleným JWT_SECRET).
 
 ### Ověření uživatele
 
 - Endpoint /me získá detail přihlášeného uživatele (pokud je JWT validní).
-- Endpoint /logout zneplatní token (pokud je blacklist povolen).
+- Endpoint /logout zneplatní token.
 
 ### Správa aplikací (Apps)
 
@@ -29,29 +33,11 @@ Rosalana Accounts je centrální služba pro řízení uživatelských účtů (
 ## Jak to funguje
 
 1. Aplikace (např. ABC) se zaregistruje v Rosalana Accounts.
-2. Získá app_token, který pak posílá v hlavičce X-App-Token (nebo Authorization, dle implementace).
+2. Získá app_token, který si uloží do `.env` a posílá ho v hlavičce X-App-Token.
 3. Uživatel se registruje přes endpoint /register a následně se přihlašuje pomocí /login.
-4. Při přihlášení dostává uživatel JWT token, který front-end (např. localStorage) nebo back-end aplikace ukládá a posílá v hlavičce Authorization: Bearer <JWT>.
+4. Při přihlášení dostává uživatel JWT token, který front-end (např. localStorage) nebo back-end aplikace ukládá a posílá v hlavičce `Authorization: Bearer <JWT>`.
 5. Rosalana Accounts tímto tokenem umí identifikovat uživatele ve všech dalších voláních (např. /me).
-6. Ostatní aplikace (ABC, ABD, …) mohou tentýž JWT token validovat „offline“ (pokud mají stejný JWT_SECRET nebo veřejný klíč v případě RS256).
-
-## High-level flow
-
-```mermaid
-sequenceDiagram
-    participant User
-    participant ABC (app)
-    participant RosalanaAccounts
-
-    User->>ABC: [Front-end] Chce se přihlásit (email + heslo)
-    ABC->>RosalanaAccounts: POST /login (s X-App-Token=ABC_APP_TOKEN)
-    RosalanaAccounts->>ABC: {user, token: <JWT>}
-    ABC->>User: Uloží JWT, user je přihlášen
-
-    User->>ABC: Volá chráněnou funkci
-    ABC->>ABC: Ověří (offline) JWT = userID = #123
-    ABC->>RosalanaAccounts: Případně volá /me /logout (s JWT)
-```
+6. Ostatní aplikace (ABC, ABD, …) mohou tentýž JWT token validovat „offline“ (pokud mají stejný JWT_SECRET v .env).
 
 ## Konvence a nastavení
 
@@ -72,7 +58,6 @@ sequenceDiagram
 
 ```makefile
 JWT_SECRET=someRandomString
-JWT_TTL=60
 # plus další podle potřeby
 ```
 
@@ -151,29 +136,9 @@ curl -X GET https://accounts.example.com/me \
 # => { "user": { ... } }
 ```
 
-## Ready to Deploy
-
-Tuto aplikaci můžete nasadit na:
-
-- VPS (Linux + PHP-FPM + Nginx/Apache)
-- Docker s oficiálním php:8.x-fpm + nginx:alpine (potřeba volume pro .env)
-- Laravel Forge, Ploi, nebo jiné hostingy
-
-Nezapomeňte:
-
-- Vytvořit databázi a spustit `php artisan migrate`.
-- Nastavit .env (hlavně APP_KEY, JWT_SECRET a ROSALANA_MASTER_TOKEN).
-- Zabezpečit veřejné URL (HTTPS, nastavit APP_ENV=production, APP_DEBUG=false).
-
 ## Další vývoj
 
-- Refresh tokeny: Pro dlouhodobé session by se mohla přidat funkce /refresh.
+- Refresh tokeny: Pro dlouhodobé session by se mohla přidat funkce /refresh. (nyní nastaveno na 24h)
 - Přechod na RS256: Pro oddělení možností „podepisovat tokeny“ a „pouze validovat“.
-- Notifikace: Napojení na Rosalana Notification Service.
+- Notifikace: Napojení na Rosalana Notification Service pro password reset.
 - Subscriptions: Napojení na Rosalana Subscription modul.
-
-## Licence & Kontakt
-
-(Doplňte dle vlastního uvážení, např. MIT, or private.)
-
-Author: Vaše jméno, vaše webstránka
