@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
+use Tymon\JWTAuth\Exceptions\TokenExpiredException;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
 class AuthController extends Controller
@@ -60,6 +61,20 @@ class AuthController extends Controller
         return response()->json([
             'user' => auth()->user(),
         ]);
+    }
+
+    public function refresh(): JsonResponse
+    {
+        try {
+            $newToken = JWTAuth::refresh(JWTAuth::getToken());
+    
+            return response()->json([
+                'token' => $newToken,
+            ]);
+        } catch (TokenExpiredException $e) {
+            // refresh token je už po expiraci
+            return response()->json(['error' => 'Refresh token expired'], 401);
+        }
     }
 
     public function logout(): JsonResponse
