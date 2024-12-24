@@ -71,7 +71,7 @@ class AuthController extends Controller
             return response()->json([
                 'token' => $newToken,
             ]);
-        } catch (TokenExpiredException $e) {
+        } catch (\Exception $e) {
             // refresh token je už po expiraci
             return response()->json(['error' => 'Refresh token expired'], 401);
         }
