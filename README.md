@@ -138,7 +138,8 @@ curl -X GET https://accounts.example.com/me \
 
 ## Další vývoj
 
-- Refresh tokeny: Pro dlouhodobé session by se mohla přidat funkce /refresh. (nyní nastaveno na 24h)
-- Přechod na RS256: Pro oddělení možností „podepisovat tokeny“ a „pouze validovat“.
-- Notifikace: Napojení na Rosalana Notification Service pro password reset.
-- Subscriptions: Napojení na Rosalana Subscription modul.
+- [ ] Global API Response Trait
+- [ ] Global Resource API Responses (např. UserResource JSON_API_STANDARD)
+- [ ] Přechod na RS256: Pro oddělení možností „podepisovat tokeny“ a „pouze validovat“.
+- [ ] Notifikace: Napojení na Rosalana Notification Service pro password reset.
+- [ ] Subscriptions: Napojení na Rosalana Subscription modul.
