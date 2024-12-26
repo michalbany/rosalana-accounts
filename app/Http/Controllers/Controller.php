@@ -8,7 +8,7 @@ abstract class Controller extends \Illuminate\Routing\Controller
 {
     use ApiResponses;
 
-        /**
+    /**
      * Catching all Exceptions
      * 
      * @param string $method
@@ -32,5 +32,4 @@ abstract class Controller extends \Illuminate\Routing\Controller
             return $this->serverError($e);
         }
     }
-
 }
