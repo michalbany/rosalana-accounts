@@ -15,4 +15,13 @@ class App extends Model
     protected $hidden = [
         'token',
     ];
+
+    protected $appends = [
+        'master',
+    ];
+
+    public function getMasterAttribute(): bool
+    {
+        return $this->token === env('ROSALANA_MASTER_TOKEN', 'master-token');
+    }
 }

@@ -65,4 +65,16 @@ class AppController extends Controller
             'app' => $app,
         ]);
     }
+
+    public function refresh(string $id): JsonResponse
+    {
+        $app = App::findOrFail($id);
+        $app->token = bin2hex(random_bytes(16));
+        $app->save();
+
+        return $this->ok('App token has been refreshed', [
+            'app' => $app,
+            'token' => $app->token,
+        ]);
+    }
 }

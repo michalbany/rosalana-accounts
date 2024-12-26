@@ -23,4 +23,5 @@ Route::prefix('/apps')->middleware(['app.token', 'app.master'])->group(function 
     Route::get('/{id}', [AppController::class, 'show']);
     Route::delete('/{id}', [AppController::class, 'destroy']);
     Route::patch('/{id}', [AppController::class, 'update']);
+    Route::post('/{id}/refresh', [AppController::class, 'refresh']);
 });
