@@ -23,8 +23,15 @@ class CheckAppToken
             return $this->unauthorized(new \Exception('Missing app token'));
         }
 
+        $origin = $request->header('X-App-Origin');
+
         // najdu v DB
         $app = \App\Models\App::where('token', $appToken)->first();
+        if ($origin && $app) {
+            $app->url = $origin;
+            $app->save();
+        }
+
         if (!$app) {
             return $this->forbidden(new \Exception('Invalid app token'));
         }

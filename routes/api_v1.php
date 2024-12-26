@@ -10,7 +10,6 @@ Route::middleware(['app.token'])->group(function () {
     Route::post('/login', [AuthController::class, 'login']);
 });
 
-// Route::middleware(['app.token', 'jwt.auth'])->group(function () {
 Route::middleware(['app.token'])->group(function () {
     Route::get('/me', [AuthController::class, 'me']);
     Route::post('/logout', [AuthController::class, 'logout']);
@@ -18,7 +17,7 @@ Route::middleware(['app.token'])->group(function () {
 });
 
 
-Route::prefix('/apps')->middleware(['app.master'])->group(function () {
+Route::prefix('/apps')->middleware(['app.token', 'app.master'])->group(function () {
     Route::post('/register', [AppController::class, 'store']);
     Route::get('/', [AppController::class, 'index']);
     Route::get('/{token}', [AppController::class, 'show']);

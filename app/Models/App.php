@@ -9,6 +9,7 @@ class App extends Model
     protected $fillable = [
         'name',
         'token',
+        'url',
     ];
 
     protected $hidden = [
