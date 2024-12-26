@@ -16,14 +16,9 @@ class AppController extends Controller
         ]);
     }
 
-    public function show(string $token): JsonResponse
+    public function show(string $id): JsonResponse
     {
-        $app = App::where('token', $token)->first();
-
-        if (!$app) {
-            throw (new \Illuminate\Database\Eloquent\ModelNotFoundException())->setModel(App::class, $token);
-        }
-
+        $app = App::findOrFail($id);
         return $this->ok('App details', [
             'app' => $app,
         ]);
@@ -46,14 +41,28 @@ class AppController extends Controller
         ]);
     }
 
-    public function destroy(string $token): JsonResponse
+    public function destroy(string $id): JsonResponse
     {
-        $app = App::where('token', $token)->first();
-        if (!$app) {
-            throw (new \Illuminate\Database\Eloquent\ModelNotFoundException())->setModel(App::class, $token);
-        }
+        $app = App::findOrFail($id);
         $app->delete();
 
         return $this->ok('App has been unregistered');
+    }
+
+    public function update(Request $request, string $id): JsonResponse
+    {
+        $request->validate([
+            'name' => 'required|string|max:255|unique:apps',
+        ]);
+
+        $app = App::findOrFail($id);
+
+        $app->update([
+            'name' => $request->name,
+        ]);
+        
+        return $this->ok('App has been updated', [
+            'app' => $app,
+        ]);
     }
 }

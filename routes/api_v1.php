@@ -18,8 +18,9 @@ Route::middleware(['app.token'])->group(function () {
 
 
 Route::prefix('/apps')->middleware(['app.token', 'app.master'])->group(function () {
-    Route::post('/register', [AppController::class, 'store']);
+    Route::post('/', [AppController::class, 'store']);
     Route::get('/', [AppController::class, 'index']);
-    Route::get('/{token}', [AppController::class, 'show']);
-    Route::delete('/{token}', [AppController::class, 'destroy']);
+    Route::get('/{id}', [AppController::class, 'show']);
+    Route::delete('/{id}', [AppController::class, 'destroy']);
+    Route::patch('/{id}', [AppController::class, 'update']);
 });
