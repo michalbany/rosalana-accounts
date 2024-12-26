@@ -9,6 +9,7 @@ use Illuminate\Http\JsonResponse;
 use Tymon\JWTAuth\Exceptions\TokenExpiredException;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use App\Http\Controllers\Controller;
+use Illuminate\Validation\Rules;
 
 class AuthController extends Controller
 {
@@ -18,7 +19,7 @@ class AuthController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:6|confirmed'
+            'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
         $user = User::create([
@@ -72,7 +73,6 @@ class AuthController extends Controller
             return $this->ok('Token refreshed', [
                 'token' => $newToken,
             ]);
-
         } catch (\Exception $e) {
             return $this->unauthorized(new \Exception('Token expired'));
         }
@@ -80,7 +80,13 @@ class AuthController extends Controller
 
     public function logout(): JsonResponse
     {
-        JWTAuth::invalidate(JWTAuth::getToken());
-        return $this->ok('Logged out');
+        try {
+            JWTAuth::invalidate(JWTAuth::getToken());
+            return $this->ok('Logged out');
+        } catch (TokenExpiredException $e) {
+            return $this->ok('Logged out');
+        } catch (\Exception $e) {
+            return $this->serverError(new \Exception('Invalid token provided.'));
+        }
     }
 }
