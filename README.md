@@ -138,8 +138,8 @@ curl -X GET https://accounts.example.com/me \
 
 ## Další vývoj
 
-- [ ] Global API Response Trait
-- [ ] Global Resource API Responses (např. UserResource JSON_API_STANDARD)
+- [x] Global API Response Trait
+- [x] Global Resource API Responses (např. UserResource JSON_API_STANDARD)
 - [ ] Globální blacklist JWT tokenů (při logoutu).
 - [ ] Přechod na RS256: Pro oddělení možností „podepisovat tokeny“ a „pouze validovat“.
 - [ ] Notifikace: Napojení na Rosalana Notification Service pro password reset.
