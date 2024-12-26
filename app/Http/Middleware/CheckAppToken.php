@@ -2,12 +2,15 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Traits\ApiResponses;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 class CheckAppToken
 {
+    use ApiResponses;
+
     /**
      * Handle an incoming request.
      *
@@ -17,16 +20,14 @@ class CheckAppToken
     {
         $appToken = $request->header('X-App-Token'); // nebo jakkoli
         if (!$appToken) {
-            return response()->json(['error' => 'Missing app token'], 401);
+            return $this->unauthorized(new \Exception('Missing app token'));
         }
 
         // najdu v DB
         $app = \App\Models\App::where('token', $appToken)->first();
         if (!$app) {
-            return response()->json(['error' => 'Invalid app token'], 403);
+            return $this->forbidden(new \Exception('Invalid app token'));
         }
-
-        // Můžu si nastavit do requestu $request->attributes->set('app', $app);
         return $next($request);
     }
 }

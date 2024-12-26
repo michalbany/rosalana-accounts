@@ -2,12 +2,15 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Traits\ApiResponses;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 class CheckMasterToken
 {
+    use ApiResponses;
+
     /**
      * Handle an incoming request.
      *
@@ -17,13 +20,13 @@ class CheckMasterToken
     {
         $appToken = $request->header('X-App-Token');
         if (!$appToken) {
-            return response()->json(['error' => 'Missing app token'], 401);
+            return $this->unauthorized(new \Exception('Missing app token'));
         }
 
         $masterToken = env('ROSALANA_MASTER_TOKEN', 'master-token');
 
         if ($appToken !== $masterToken) {
-            return response()->json(['error' => 'App token is not master token'], 403);
+            return $this->unauthorized(new \Exception('App is not authorized for this action'));
         }
         
         return $next($request);

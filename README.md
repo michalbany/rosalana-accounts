@@ -140,6 +140,20 @@ curl -X GET https://accounts.example.com/me \
 
 - [ ] Global API Response Trait
 - [ ] Global Resource API Responses (např. UserResource JSON_API_STANDARD)
+- [ ] Globální blacklist JWT tokenů (při logoutu).
 - [ ] Přechod na RS256: Pro oddělení možností „podepisovat tokeny“ a „pouze validovat“.
 - [ ] Notifikace: Napojení na Rosalana Notification Service pro password reset.
 - [ ] Subscriptions: Napojení na Rosalana Subscription modul.
+
+
+## API Standard
+Api standart je trochu jiný než v punktero IS. Zde se meta zprávy posílají v hlavním objektu ne v meta. Také se používá $this->ok() pro success.
+
+Správné volání model resources by bylo takto:
+
+```php
+return $this->ok('Some message', UserResource::collection($user));
+```
+
+`data` profix už se v vkládá automaticky, takže je potřeba odstranit z ApiResource.php
+

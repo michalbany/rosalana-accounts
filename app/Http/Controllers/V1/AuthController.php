@@ -29,7 +29,7 @@ class AuthController extends Controller
 
         $token = JWTAuth::fromUser($user);
 
-        return response()->json([
+        return $this->ok('User registered', [
             'user' => $user,
             'token' => $token,
         ]);
@@ -47,11 +47,11 @@ class AuthController extends Controller
 
         // Attempt vrátí token, nebo false
         if (!$token = JWTAuth::attempt($credentials)) {
-            return response()->json(['error' => 'Invalid credentials'], 401);
+            return $this->unauthorized(new \Exception('Invalid credentials'));
         }
 
         // Tady máme token
-        return response()->json([
+        return $this->ok('Logged in', [
             'user' => auth()->user(),
             'token' => $token,
         ]);
@@ -59,7 +59,7 @@ class AuthController extends Controller
 
     public function me(Request $request): JsonResponse
     {
-        return response()->json([
+        return $this->ok('User info', [
             'user' => auth()->user(),
         ]);
     }
@@ -68,19 +68,19 @@ class AuthController extends Controller
     {
         try {
             $newToken = JWTAuth::refresh(JWTAuth::getToken());
-    
-            return response()->json([
+
+            return $this->ok('Token refreshed', [
                 'token' => $newToken,
             ]);
+
         } catch (\Exception $e) {
-            // refresh token je už po expiraci
-            return response()->json(['error' => 'Refresh token expired'], 401);
+            return $this->unauthorized(new \Exception('Token expired'));
         }
     }
 
     public function logout(): JsonResponse
     {
         JWTAuth::invalidate(JWTAuth::getToken());
-        return response()->json(['message' => 'Logged out']);
+        return $this->ok('Logged out');
     }
 }

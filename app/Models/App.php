@@ -10,4 +10,8 @@ class App extends Model
         'name',
         'token',
     ];
+
+    protected $hidden = [
+        'token',
+    ];
 }

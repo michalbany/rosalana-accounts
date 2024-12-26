@@ -11,7 +11,7 @@ class AppController extends Controller
 {
     public function index(): JsonResponse
     {
-        return response()->json([
+        return $this->ok('List of all apps', [
             'apps' => App::all(),
         ]);
     }
@@ -19,10 +19,14 @@ class AppController extends Controller
     public function show(string $token): JsonResponse
     {
         $app = App::where('token', $token)->first();
+
         if (!$app) {
-            return response()->json(['error' => 'App not found'], 404);
+            throw (new \Illuminate\Database\Eloquent\ModelNotFoundException())->setModel(App::class, $token);
         }
-        return response()->json($app);
+
+        return $this->ok('App details', [
+            'app' => $app,
+        ]);
     }
 
     public function store(Request $request): JsonResponse
@@ -36,16 +40,20 @@ class AppController extends Controller
             'token' => bin2hex(random_bytes(16)),
         ]);
 
-        return response()->json($app);
+        return $this->ok('App has been registered', [
+            'app' => $app,
+            'token' => $app->token,
+        ]);
     }
 
     public function destroy(string $token): JsonResponse
     {
         $app = App::where('token', $token)->first();
         if (!$app) {
-            return response()->json(['error' => 'App not found'], 404);
+            throw (new \Illuminate\Database\Eloquent\ModelNotFoundException())->setModel(App::class, $token);
         }
         $app->delete();
-        return response()->json(['message' => 'App has been unregistered']);
+
+        return $this->ok('App has been unregistered');
     }
 }
