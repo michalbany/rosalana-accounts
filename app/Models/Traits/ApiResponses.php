@@ -31,7 +31,7 @@ trait ApiResponses
     /**
      * @param string|array<string,mixed> $errors
      */
-    protected function error(string|array $errors = [], int $statusCode = 500): JsonResponse
+    protected function error(string|array $errors = [], int $statusCode = 500, string $message = 'Unknown error'): JsonResponse
     {
         if (is_string($errors)) {
             return response()->json([
@@ -40,6 +40,7 @@ trait ApiResponses
         }
 
         return response()->json([
+            'message' => $message,
             'errors' => $errors,
         ], $statusCode);
     }
@@ -78,7 +79,7 @@ trait ApiResponses
     protected function validationFailed(Exception|\Illuminate\Validation\ValidationException $e): JsonResponse
     {
         if ($e instanceof \Illuminate\Validation\ValidationException) {
-            return $this->error($e->errors(), 422);
+            return $this->error($e->errors(), 422, $e->getMessage());
         } else {
             return $this->error($e->getMessage(), 422);
         }
